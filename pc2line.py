@@ -25,9 +25,12 @@ import laspy
 import networkx as nx
 
 
+# --------------------------------------------------------------------------- #
 def usg():
     print("Usage:\npython pc2line.py LASFILE.")
     sys.exit()
+# --------------------------------------------------------------------------- #
+
 
 def plot_tri_simple(ax, points, tri=None):
     if tri is not None:
@@ -41,14 +44,6 @@ def plot_tri_simple(ax, points, tri=None):
             ax.plot3D(pts[[2,3],0], pts[[2,3],1], pts[[2,3],2], color='g', lw='0.1')
 
     ax.scatter(points[:,0], points[:,1], points[:,2], alpha=0.25)
-
-
-def maya_plot(points, tri):
-    from mayavi import mlab
-    vertices = np.array([[0, 1, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])
-    faces = np.array([[0, 1, 0, 0],[1, 2, 1, 2],[2, 3, 3, 3]])
-    mlab.triangular_mesh(vertices[0,:], vertices[1,:], vertices[2,:], faces.T)
-    mlab.show()
 
 
 def compute_delaunay_tetra_circumcenters(dt):
@@ -115,6 +110,7 @@ def compute_voronoi_vertices_and_edges(points, r_thresh=np.inf):
     :return: array of xyz Voronoi vertex points and an edge list.
     """
     dt = Delaunay(points)
+    maya_plot(dt.points, dt.simplices)
     xyz_centers = compute_delaunay_tetra_circumcenters(dt)
 
     # filtering tetrahedrons that have radius > thresh
