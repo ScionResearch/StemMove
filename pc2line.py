@@ -46,6 +46,35 @@ def plot_tri_simple(ax, points, tri=None):
     ax.scatter(points[:,0], points[:,1], points[:,2], alpha=0.25)
 
 
+def plot_tri_efficient(ax, points, tri=None):
+    if tri is not None:
+        edges = collect_edges(tri)
+        x = np.array([])
+        y = np.array([])
+        z = np.array([])
+        for (i,j) in edges:
+            x = np.append(x, [points[i, 0], points[j, 0], np.nan])
+            y = np.append(y, [points[i, 1], points[j, 1], np.nan])
+            z = np.append(z, [points[i, 2], points[j, 2], np.nan])
+        ax.plot3D(x, y, z, color='g', lw='0.1')
+    ax.scatter(points[:,0], points[:,1], points[:,2], color='b')
+
+
+def collect_edges(tri):
+    edges = set()
+    def sorted_tuple(a,b):
+        return (a,b) if a < b else (b,a)
+    # Add edges of tetrahedron (sorted so we don't add an edge twice, even if it comes in reverse order)
+    for (i0, i1, i2, i3) in tri.simplices:
+        edges.add(sorted_tuple(i0,i1))
+        edges.add(sorted_tuple(i0,i2))
+        edges.add(sorted_tuple(i0,i3))
+        edges.add(sorted_tuple(i1,i2))
+        edges.add(sorted_tuple(i1,i3))
+        edges.add(sorted_tuple(i2,i3))
+    return edges
+
+
 def compute_delaunay_tetra_circumcenters(dt):
     """
     Compute the centers of the circumscribing circle of each tetrahedron in the Delaunay triangulation.
@@ -110,7 +139,12 @@ def compute_voronoi_vertices_and_edges(points, r_thresh=np.inf):
     :return: array of xyz Voronoi vertex points and an edge list.
     """
     dt = Delaunay(points)
-    maya_plot(dt.points, dt.simplices)
+
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    plot_tri_efficient(ax, points, tri=dt)
+    plt.show()
+
     xyz_centers = compute_delaunay_tetra_circumcenters(dt)
 
     # filtering tetrahedrons that have radius > thresh
@@ -158,7 +192,7 @@ def spline_3D(xyz, smoothing_factor=0.7):
     """Return a smoothed version of the 3D line coordinates."""
     # Parametric axis
     u = np.arange(xyz.shape[0])
-    # ^ Only 'clean' if points are equally-spaced, of which there is 
+    # ^ Only 'clean' if points are equally-spaced, of which there is
     # absolutely no guarantee. Use arclength instead, cf. tropism code.
 
     s = smoothing_factor * xyz.shape[0]
@@ -239,4 +273,3 @@ if __name__ == "__main__":
 
     main(las_file)
 # -------------------------------------------------------------------------- #
-
