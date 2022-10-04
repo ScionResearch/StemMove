@@ -202,7 +202,6 @@ def spline_3D(xyz, smoothing_factor=0.7):
     s = smoothing_factor * xyz.shape[0]
 
     # UnivariateSpline
-    s = 0.7 * len(u)     # smoothing factor
     spx = UnivariateSpline(u, xyz[:,0], s=s)
     spy = UnivariateSpline(u, xyz[:,1], s=s)
     spz = UnivariateSpline(u, xyz[:,2], s=s)
