@@ -15,7 +15,6 @@ import numpy as np
 
 # For visualising the point cloud and its triangulation
 import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
 
 # import liblas # python -m pip install liblas. Minor version issue on reading
 # RH .laz file.
@@ -27,7 +26,8 @@ import networkx as nx
 
 # --------------------------------------------------------------------------- #
 def usg():
-    print("Usage:\npython pc2line.py LASFILE.")
+    print("""Usage:
+          python pc2line.py LASFILE Xstart Ystart Zstart Xend Yend Zend""")
     sys.exit()
 # --------------------------------------------------------------------------- #
 
@@ -140,14 +140,15 @@ def compute_voronoi_vertices_and_edges(points, r_thresh=np.inf):
     """
     dt = Delaunay(points)
 
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    plot_tri_efficient(ax, points, tri=dt)
-    plt.show()
+    if __debug__:
+#        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        plot_tri_efficient(ax, points, tri=dt)
+        plt.show()
 
     xyz_centers = compute_delaunay_tetra_circumcenters(dt)
 
-    # filtering tetrahedrons that have radius > thresh
+    # filtering out tetrahedrons that have radius > thresh
     simp_pts_0 = dt.points[dt.simplices[:, 0]]
     radii = np.linalg.norm(xyz_centers - simp_pts_0, axis=1)
     is_in = radii < r_thresh
@@ -161,20 +162,23 @@ def compute_voronoi_vertices_and_edges(points, r_thresh=np.inf):
             if j != -1 and is_in[j]:
                 edge_lst.append((i, j))
 
+    # DS: tetrahedra filtered out are still shown in the Voronoi plot
+    #     complete triangulation.
+
     return xyz_centers, edge_lst
 
 
-def read_las(filename):
-    """Read a laser file and return the 3D point coordinates."""
-    with liblas.file.File(filename, mode="r") as fin:
-        npts = np.size(fin) # Check that, not sure what I'm getting here
-        print("LAS file size:", npts, "Is it number of pts?")
-        breakpoint()
-        xyz = np.zeros((npts, 3)) # Check that the dims are okay (3xN)
-        for i, p in enumerate(fin):
-            xyz[i,:] = [p.x, p.y, p.z]
-
-    return xyz
+#def read_las(filename):
+#    """Read a laser file and return the 3D point coordinates."""
+#    with liblas.file.File(filename, mode="r") as fin:
+#        npts = np.size(fin) # Check that, not sure what I'm getting here
+#        print("LAS file size:", npts, "Is it number of pts?")
+#        breakpoint()
+#        xyz = np.zeros((npts, 3)) # Check that the dims are okay (3xN)
+#        for i, p in enumerate(fin):
+#            xyz[i,:] = [p.x, p.y, p.z]
+#
+#    return xyz
 
 
 def read_las_v2(filename):
@@ -208,27 +212,25 @@ def spline_3D(xyz, smoothing_factor=0.7):
 
 
 # ------------------ MAIN -------------------------------------------------- #
-def main(las_file):
-    # Define extreme points of centroid
-    ## Requires a priori knowledge of PC and manual intervention
-    start_pt = [16.0, 21.0, 0.0]
-    end_pt = [-5.0, 60.0, 40.0]
+def main(las_file, start_pt, end_pt):
 
     # Read laser file data as set of 3 point coordinates
     pts = read_las_v2(las_file)
 
-    # DBG ===
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
     if __debug__:
+        ax = plt.axes(projection='3d')
         plot_tri_simple(ax, pts)
 
     # get closest vertex to start and end points
     xyz_centers, edge_lst = compute_voronoi_vertices_and_edges(pts,
-                                                               r_thresh=2.0)
+                                                               r_thresh=0.01)
     kdt = cKDTree(xyz_centers)
     dist0, idx0 = kdt.query(np.array(start_pt))
     dist1, idx1 = kdt.query(np.array(end_pt))
+
+    print(f"idx0 = {idx0}; idx1 = {idx1}")
+    print(f"idx0 = {xyz_centers[idx0]}; idx1 = {xyz_centers[idx1]}")
+
 
     # compute shortest weighted path
     edge_lengths = [np.linalg.norm(xyz_centers[e[0], :] - xyz_centers[e[1], :]) for e in edge_lst]
@@ -244,6 +246,8 @@ def main(las_file):
         ax.plot(path_xyz[:,0], path_xyz[:,1], path_xyz[:,2], color='red',lw=2,
                 label='shortest path')
 
+    fraw = os.path.splitext(las_file)[0] + '_shortest.npy'
+    np.save(fraw, path_xyz)
     # Smooth it
     path_splined = spline_3D(path_xyz)
 
@@ -255,7 +259,6 @@ def main(las_file):
 
     # Write to disk (as numpy binary format, use load to get in memory again).
     fout = os.path.splitext(las_file)[0] + '_spline.npy'
-    print(fout)
     np.save(fout, path_splined)
 
 # -------------------------------------------------------------------------- #
@@ -264,12 +267,20 @@ def main(las_file):
 # -------------------------------------------------------------------------- #
 if __name__ == "__main__":
     args = sys.argv[:]
-    if len(args) != 2:
-        usg()
+    if len(args) == 8:
+        # Get name of file containing PCD
+        las_file = args[1]
+        if las_file[-4:] not in (".las", ".laz"):
+            usg(); sys.exit()
 
-    las_file = args[1]
-    if las_file[-4:] not in (".las", ".laz"):
-        usg()
+        # Define extreme points of centroid
+        ## Requires a priori knowledge of PC and manual intervention
+        ends = list(map(float, args[2:]))
+        p0 = ends[:3]
+        p1 = ends[3:]
+    else:
+        usg(); sys.exit()
 
-    main(las_file)
+
+    main(las_file, start_pt=p0, end_pt=p1)
 # -------------------------------------------------------------------------- #
