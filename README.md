@@ -22,7 +22,7 @@ CLI:
 ```
 python -O pc2line.py Cloud.las -0.046 0.183 0.003 0.015 0.071 0.3
 ```
-The provided PCD (3,000 points) is processed in 2.1s. A dataset with 15 times more points (~45,000) is processed in 19.2s. For 88,000 pts, the script runs in 32 s. Behaviour largely appears O(n). The max. tet size for parsing the Voronoi has a large impact on processing time (because it reduces total number of tets). The advantage of keep a high number of points is to decrease tet size (see below re. cutting corners).
+The provided PCD (3,000 points) is processed in 2.1s. A dataset with 15 times more points (~45,000) is processed in 19.2s. For 88,000 pts, the script runs in 32 s. Behaviour largely appears O(n). Max. tet size (`r_thresh`) has a notable impact on processing time (because it reduces total number of tets to process). Using PCD with the highest number of points possible allows very small tetrahedra size to be specified and therefore to avoid lumping needles and branches with the stem (see below re. cutting corners).
 
 A poor choice of end coordinates will break down the algorithm.
 
