@@ -222,7 +222,7 @@ def main(las_file, start_pt, end_pt):
 
     # get closest vertex to start and end points
     xyz_centers, edge_lst = compute_voronoi_vertices_and_edges(pts,
-                                                               r_thresh=0.01)
+                                                               r_thresh=0.003)
     kdt = cKDTree(xyz_centers)
     dist0, idx0 = kdt.query(np.array(start_pt))
     dist1, idx1 = kdt.query(np.array(end_pt))
@@ -245,10 +245,11 @@ def main(las_file, start_pt, end_pt):
         ax.plot(path_xyz[:,0], path_xyz[:,1], path_xyz[:,2], color='red',lw=2,
                 label='shortest path')
 
-    fraw = os.path.splitext(las_file)[0] + '_shortest.npy'
+    fraw = os.path.splitext(las_file)[0] + '_shortest'
     np.save(fraw, path_xyz)
+    np.savetxt(fraw + ".csv", path_xyz)
     # Smooth it
-    path_splined = spline_3D(path_xyz)
+    path_splined = spline_3D(path_xyz, smoothing_factor=2.0e-6)
 
     if __debug__:
         ax.plot(path_splined[:,0], path_splined[:,1], path_splined[:,2],
@@ -257,7 +258,8 @@ def main(las_file, start_pt, end_pt):
         plt.show()
 
     # Write to disk (as numpy binary format, use load to get in memory again).
-    fout = os.path.splitext(las_file)[0] + '_spline.npy'
+    fout = os.path.splitext(las_file)[0] + '_spline'
+    np.savetxt(fout + ".csv", path_xyz)
     np.save(fout, path_splined)
 
 # -------------------------------------------------------------------------- #
