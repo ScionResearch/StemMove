@@ -260,7 +260,7 @@ def main(las_file, end_points):
         # Get spatial coordinates of path points
         path_xyz_parts.append(xyz_centers[path_s])
 
-    breakpoint()
+#    breakpoint()
     path_xyz = merge(path_xyz_parts)
 
     if __debug__:
@@ -302,7 +302,7 @@ if __name__ == "__main__":
             usg(); sys.exit()
 
         # Define extreme points of segments the centroid must go through.
-        csv_data = pd.read_csv(args[2], sep=' ')
+        csv_data = pd.read_csv(args[2], sep=',', names=['x', 'y', 'z'])
         pts = [(p.x, p.y, p.z) for _id, p in csv_data.iterrows()]
     else:
         usg(); sys.exit()
