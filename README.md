@@ -10,7 +10,8 @@ This repository provides three utilities:
 `pc2line.py` extracts the shortest path throught a given point cloud linking 2
 end points specified by the user. Raw and smoothed version of the path lines
 are written to disk (as `numpy` arrays).
-This is an implementation of the Iddo-Haniel 'spine-finding' algorithm.
+This is an implementation of Iddo Haniel's 'spine-finding' algorithm as provided at
+<https://stackoverflow.com/questions/64911820/fit-curve-spline-to-3d-point-cloud>.
 
 `pc2segmented.py` does the same thing as `pc2line.py` but on a succession of end points. This was developped to handle point cloud hulls with marked curvature and constrain spine to a preferred path.
 
